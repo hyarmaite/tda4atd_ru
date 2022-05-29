@@ -40,7 +40,7 @@ stats_name = "s_e_v_c_b0b1" # The set of topological features that will be count
 thresholds_array = [0.025, 0.05, 0.1, 0.25, 0.5, 0.75] # The set of thresholds
 thrs = len(thresholds_array)                           # ("t" in the paper)
 
-model_path = tokenizer_path = "bert-base-uncased"  
+model_path = tokenizer_path = "DeepPavlov/rubert-base-cased"
 
 # You can use either standard or fine-tuned BERT. If you want to use fine-tuned BERT to your current task, save the
 # model and the tokenizer with the commands tokenizer.save_pretrained(output_dir); 
