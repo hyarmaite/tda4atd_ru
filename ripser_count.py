@@ -2,7 +2,10 @@ import ripserplusplus as rpp
 import numpy as np
 from tqdm import tqdm
 import time
+import gc
 from utils import cutoff_matrix
+
+import torch.nn as nn
 
 ###################################
 # RIPSER FEATURE CALCULATION FORMAT
