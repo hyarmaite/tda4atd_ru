@@ -46,7 +46,7 @@ model_path = tokenizer_path = "bert-base-uncased"
 # model and the tokenizer with the commands tokenizer.save_pretrained(output_dir);
 # bert_classifier.save_pretrained(output_dir) into the same directory and insert the path to it here.
 
-subset = "valid_5k"           # .csv file with the texts, for which we count topological features
+subset = sys.argv[1]           # .csv file with the texts, for which we count topological features
 input_dir = "small_gpt_web/"  # Name of the directory with .csv file
 output_dir = "small_gpt_web/" # Name of the directory with calculations results
 
@@ -261,7 +261,7 @@ while iterv > 0:
     os.system('ls small_gpt_web/attentions')
 
     # Run computations in completely isolated runtime assuming it helps with memory problem.
-    p = subprocess.Popen(["python3", "-u", "ripser_caller.py"], stdout = sys.stdout, stderr = sys.stderr)
+    p = subprocess.Popen(["python3", "-u", "ripser_caller.py", subset], stdout = sys.stdout, stderr = sys.stderr)
     p.wait()
 
     adj_matricies = []

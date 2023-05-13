@@ -51,7 +51,7 @@ model_path = tokenizer_path = "bert-base-uncased"
 # model and the tokenizer with the commands tokenizer.save_pretrained(output_dir);
 # bert_classifier.save_pretrained(output_dir) into the same directory and insert the path to it here.
 
-subset = "valid_5k"           # .csv file with the texts, for which we count topological features
+subset = sys.argv[1]           # .csv file with the texts, for which we count topological features
 input_dir = "small_gpt_web/"  # Name of the directory with .csv file
 output_dir = "small_gpt_web/" # Name of the directory with calculations results
 
