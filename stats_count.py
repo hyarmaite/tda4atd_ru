@@ -91,7 +91,7 @@ def adj_ms_to_nx_lists(adj_matricies, \
                                                  no_mat_output=no_mat_output)
         graph_lists.append(g_list)
         filt_mat_lists.append(filt_mat_lists)
-    
+
     return graph_lists, filt_mat_lists
 
 def count_stat(g_listt_j, function=nx.weakly_connected_components, cap=500):
@@ -112,16 +112,16 @@ def count_stat(g_listt_j, function=nx.weakly_connected_components, cap=500):
         stat_amount += 1
         if stat_amount >= cap:
             break
-    return stat_amount 
+    return stat_amount
 
 def count_weak_components(g_listt_j, cap=500):
-    return count_stat(g_listt_j, 
-                      function=nx.weakly_connected_components, 
+    return count_stat(g_listt_j,
+                      function=nx.weakly_connected_components,
                       cap=cap)
 
 def count_strong_components(g_listt_j, cap=500):
-    return count_stat(g_listt_j, 
-                      function=nx.strongly_connected_components, 
+    return count_stat(g_listt_j,
+                      function=nx.strongly_connected_components,
                       cap=cap)
 
 def count_simple_cycles(g_listt_j, cap=500):
@@ -185,7 +185,7 @@ def dim_simple_cycles(graph_lists, verbose, cap=500):
 
 def b0_b1(graph_lists, verbose):
     """
-    Calculates first two Betti numbers for each graph in list of lists of 
+    Calculates first two Betti numbers for each graph in list of lists of
     digraphs. If verbose==True, shows progress bar.
 
     Args:
@@ -207,9 +207,9 @@ def b0_b1(graph_lists, verbose):
         b0 = []
         b1 = []
         for j in range (len(g_list)):
-            g = nx.Graph(g_list[j].to_undirected()) 
+            g = nx.Graph(g_list[j].to_undirected())
             w = nx.number_connected_components(g)
-            e = g.number_of_edges() 
+            e = g.number_of_edges()
             v = g.number_of_nodes()
             b0.append(w)
             b1.append(e - v + w)
@@ -314,15 +314,15 @@ def H_1_statistics_by_thresholds(thresholds_array, \
     plt.show()
 
 
-def count_top_stats(adj_matricies, 
-                    thresholds_array, 
-                    ntokens_array, 
-                    stats_to_count={"s", "e", "c", "v", "b0b1"}, 
-                    stats_cap=500, 
-                    sleep_time=0, 
+def count_top_stats(adj_matricies,
+                    thresholds_array,
+                    ntokens_array,
+                    stats_to_count={"s", "e", "c", "v", "b0b1"},
+                    stats_cap=500,
+                    sleep_time=0,
                     verbose=False):
     """
-    The main function for calculating topological invariants. Unites the 
+    The main function for calculating topological invariants. Unites the
     functional of all functions above.
 
     Args:
@@ -355,8 +355,8 @@ def count_top_stats(adj_matricies,
                                                            cap=stats_cap))
             if "w" in stats_to_count:
                 feat_lists.append(dim_connected_components(g_lists,
-                                                           strong=False, 
-                                                           verbose=False, 
+                                                           strong=False,
+                                                           verbose=False,
                                                            cap=stats_cap))
             if "e" in stats_to_count:
                 feat_lists.append(edges_f(g_lists, verbose=False))
@@ -364,14 +364,14 @@ def count_top_stats(adj_matricies,
                 feat_lists.append(v_degree_f(g_lists, verbose=False))
             if "c" in stats_to_count:
                 feat_lists.append(dim_simple_cycles(g_lists,
-                                                    verbose=False, 
+                                                    verbose=False,
                                                     cap=stats_cap))
             if "b0b1" in stats_to_count:
-                b0_lists, b1_lists = b0_b1(g_lists, verbose=False) 
+                b0_lists, b1_lists = b0_b1(g_lists, verbose=False)
                 feat_lists.append(b0_lists)
                 feat_lists.append(b1_lists)
             stats_tuple_lists_array[-1].append(tuple(feat_lists))
-            
-    stats_tuple_lists_array = np.asarray(stats_tuple_lists_array, 
+
+    stats_tuple_lists_array = np.asarray(stats_tuple_lists_array,
                                          dtype=np.float16)
     return stats_tuple_lists_array
