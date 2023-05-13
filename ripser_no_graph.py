@@ -40,7 +40,7 @@ stats_name = "s_e_v_c_b0b1" # The set of topological features that will be count
 thresholds_array = [0.025, 0.05, 0.1, 0.25, 0.5, 0.75] # The set of thresholds
 thrs = len(thresholds_array)                           # ("t" in the paper)
 
-model_path = tokenizer_path = "DeepPavlov/rubert-base-cased"
+model_path = tokenizer_path = "bert-base-cased"
 
 # You can use either standard or fine-tuned BERT. If you want to use fine-tuned BERT to your current task, save the
 # model and the tokenizer with the commands tokenizer.save_pretrained(output_dir); 
@@ -67,6 +67,13 @@ barcodes_file = output_dir + 'barcodes/' + subset  + "_all_heads_" + str(len(lay
 ripser_file = output_dir + 'features/' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
+                 
+euc_final_emb_file = output_dir + 'final_embeddings/euclidean_distance/' + subset
+sph_final_emb_file = output_dir + 'final_embeddings/spherical_distance/' + subset
+
+euc_start_emb_file = output_dir + 'start_embeddings/euclidean_distance/' + subset
+sph_start_emb_file = output_dir + 'start_embeddings/spherical_distance/' + subset
+# Names of files for distance matrices for different embedding sets
 
 try:
     data = pd.read_csv(input_dir + subset + ".csv").reset_index(drop=True)
@@ -87,8 +94,8 @@ print("Min. amount of words in example:", np.min(sentences))
 
 MAX_LEN = max_tokens_amount
 
-tokenizer = pickle.load(open('/home/amshtareva/tokenizer_obj','rb'))
-#tokenizer = BertTokenizer.from_pretrained(tokenizer_path, do_lower_case=True)
+# tokenizer = pickle.load(open('/home/amshtareva/tokenizer_obj','rb'))
+tokenizer = BertTokenizer.from_pretrained(tokenizer_path, do_lower_case=True)
 
 def get_token_length(batch_texts):
     inputs = tokenizer.batch_encode_plus(batch_texts,
@@ -119,6 +126,14 @@ print("Tokens read")
 batched_sentences = np.array_split(data['Text'].values, number_of_batches)
 adj_matricies = []
 adj_filenames = []
+final_euc_matricies = []
+final_euc_filenames = []
+final_sph_matricies = []
+final_sph_filenames = []
+start_euc_matricies = []
+start_euc_filenames = []
+start_sph_matricies = []
+start_sph_filenames = []
 number_of_batches = ceil(len(data['Text']) / batch_size)
 number_of_files = ceil(number_of_batches / DUMP_SIZE)
 number_of_batches_single = ceil(len(data['Text']) / batch_size)
@@ -139,43 +154,86 @@ component = ceil(len(features_array)/2)
 iterv = number_of_batches-component*number_of_batches_single
 
 device='cuda'
-#model = BertForSequenceClassification.from_pretrained(model_path, output_attentions=True)
-model = pickle.load(open('/home/amshtareva/model_obj','rb'))
-model = nn.DataParallel(model)
+model = BertForSequenceClassification.from_pretrained(model_path, output_hidden_states=True, output_attentions=True)
+# model = pickle.load(open('/home/amshtareva/model_obj','rb'))
+# model = nn.DataParallel(model)
 model = model.to(device)
 
 print("Entering loop.")
 
 while iterv > 0:
-
 #for component in range(4):
-    for i in range(min(number_of_batches_single, iterv)): 
+    for i in tqdm(range(min(number_of_batches_single, iterv)), desc="Weights calc"): 
         attention_w = grab_attention_weights(model, tokenizer, batched_sentences[i+component*number_of_batches_single], max_tokens_amount, device)
-        # sample X layer X head X n_token X n_token
         adj_matricies.append(attention_w)
+        
+        start_emb_euclid, start_emb_spher, res_emb_euclid, res_emb_spher = grab_attention_weights(model, tokenizer, batched_sentences[i+component*number_of_batches_single], max_tokens_amount, device)
+        final_euc_matricies.append(res_emb_euclid)
+        final_sph_matricies.append(res_emb_spher)
+        start_euc_matricies.append(start_emb_euclid)
+        start_sph_matricies.append(start_emb_spher)
+        
+        
         if (i+1) % DUMP_SIZE == 0: # dumping
             print(f'Saving: shape {adj_matricies[0].shape}')
             adj_matricies = np.concatenate(adj_matricies, axis=1)
-            print("Concatenated")
             adj_matricies = np.swapaxes(adj_matricies, axis1=0, axis2=1) # sample X layer X head X n_token X n_token
             # Carefully with boundaries
             filename = r_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
-            print(f"Saving weights to : {filename}")
             adj_filenames.append(filename)
             np.save(filename, adj_matricies)
             adj_matricies = []
-            
+
+            filename1 = euc_final_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
+            final_euc_filenames.append(filename1)
+            np.save(filename1, final_euc_matricies)
+            final_euc_matricies = []
+
+            filename2 = sph_final_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
+            final_sph_filenames.append(filename2)
+            np.save(filename2, final_sph_matricies)
+            final_sph_matricies = []
+
+            filename3 = euc_start_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
+            start_euc_filenames.append(filename3)
+            np.save(filename3, start_euc_matricies)
+            start_euc_matricies = []
+
+            filename4 = sph_start_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
+            start_sph_filenames.append(filename3)
+            np.save(filename4, start_sph_matricies)
+            start_sph_matricies = []
+
+
     if len(adj_matricies):
         print("Alert!")
         filename = r_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
         print(f'Saving: shape {adj_matricies[0].shape}')
         adj_matricies = np.concatenate(adj_matricies, axis=1)
-        print("Concatenated")
         adj_matricies = np.swapaxes(adj_matricies, axis1=0, axis2=1) # sample X layer X head X n_token X n_token
-        print(f"Saving weights to : {filename}")
         np.save(filename, adj_matricies)
         adj_matricies = []
 
+        filename1 = euc_final_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
+        final_euc_filenames.append(filename1)
+        np.save(filename1, final_euc_matricies)
+        final_euc_matricies = []
+
+        filename2 = sph_final_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
+        final_sph_filenames.append(filename2)
+        np.save(filename2, final_sph_matricies)
+        final_sph_matricies = []
+
+        filename3 = euc_start_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
+        start_euc_filenames.append(filename3)
+        np.save(filename3, start_euc_matricies)
+        start_euc_matricies = []
+
+        filename4 = sph_start_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
+        start_sph_filenames.append(filename3)
+        np.save(filename4, start_sph_matricies)
+        start_sph_matricies = []
+        
     print("Results saved.")
     
     # Run computations in completely isolated runtime assuming it helps with memory problem.
