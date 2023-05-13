@@ -115,7 +115,7 @@ number_of_batches_single = ceil(mod / batch_size)
 single_set = ceil(number_of_batches_single / DUMP_SIZE)
 
 hfeat = []
-for i in range (2,10):
+for i in range (2,20):
      hfeat.append("h" + str(i) + "_t_b")
      hfeat.append("h" + str(i) + "_n_b_m_t0.1")
      hfeat.append("h" + str(i) + "_n_b_l_t0.2")
