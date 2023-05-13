@@ -67,16 +67,16 @@ barcodes_file = output_dir + 'barcodes/' + subset  + "_all_heads_" + str(len(lay
 ripser_file = output_dir + 'features/' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
-ripser_euc_final_file = output_dir + 'features/euc_final' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+ripser_euc_final_file = output_dir + 'features/euc_final_' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
-ripser_euc_start_file = output_dir + 'features/euc_start' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+ripser_euc_start_file = output_dir + 'features/euc_start_' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
-ripser_sph_final_file = output_dir + 'features/sph_final' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+ripser_sph_final_file = output_dir + 'features/sph_final_' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
-ripser_sph_start_file = output_dir + 'features/sph_start' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+ripser_sph_start_file = output_dir + 'features/sph_start_' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
 
@@ -201,20 +201,24 @@ while iterv > 0:
 
             filename1 = euc_final_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
             final_euc_filenames.append(filename1)
+            final_euc_matricies = np.swapaxes(final_euc_matricies, axis1=0, axis2=1)
             np.save(filename1, final_euc_matricies)
             final_euc_matricies = []
 
             filename2 = sph_final_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
             final_sph_filenames.append(filename2)
+            final_sph_matricies = np.swapaxes(final_sph_matricies, axis1=0, axis2=1)
             np.save(filename2, final_sph_matricies)
             final_sph_matricies = []
 
             filename3 = euc_start_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
             start_euc_filenames.append(filename3)
+            start_euc_matricies = np.swapaxes(start_euc_matricies, axis1=0, axis2=1)
             np.save(filename3, start_euc_matricies)
             start_euc_matricies = []
 
             filename4 = sph_start_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
+            start_sph_matricies = np.swapaxes(start_sph_matricies, axis1=0, axis2=1)
             start_sph_filenames.append(filename3)
             np.save(filename4, start_sph_matricies)
             start_sph_matricies = []
@@ -231,21 +235,25 @@ while iterv > 0:
 
         filename1 = euc_final_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
         final_euc_filenames.append(filename1)
+        final_euc_matricies = np.swapaxes(final_euc_matricies, axis1=0, axis2=1)
         np.save(filename1, final_euc_matricies)
         final_euc_matricies = []
 
         filename2 = sph_final_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
         final_sph_filenames.append(filename2)
+        final_sph_matricies = np.swapaxes(final_sph_matricies, axis1=0, axis2=1)
         np.save(filename2, final_sph_matricies)
         final_sph_matricies = []
 
         filename3 = euc_start_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
         start_euc_filenames.append(filename3)
+        start_euc_matricies = np.swapaxes(start_euc_matricies, axis1=0, axis2=1)
         np.save(filename3, start_euc_matricies)
         start_euc_matricies = []
 
         filename4 = sph_start_emb_file + "_part" + str(ceil(i/DUMP_SIZE)+component*single_set) + "of" + str(number_of_files) + '.npy'
         start_sph_filenames.append(filename3)
+        start_sph_matricies = np.swapaxes(start_sph_matricies, axis1=0, axis2=1)
         np.save(filename4, start_sph_matricies)
         start_sph_matricies = []
 

@@ -87,6 +87,8 @@ def function_for_v(list_of_v_degrees_of_graph):
 
 def split_matricies_and_lengths(adj_matricies, ntokens_array, num_of_workers):
     print(f'SHAPE: {adj_matricies.shape}')
+    print(f'SHAPE: {ntokens_array.shape}')
+    print(f'Tokens: {ntokens_array}')
     splitted_adj_matricies = np.array_split(adj_matricies, num_of_workers)
     splitted_ntokens = np.array_split(ntokens_array, num_of_workers)
     assert all([len(m)==len(n) for m, n in zip(splitted_adj_matricies, splitted_ntokens)]), "Split is not valid!"

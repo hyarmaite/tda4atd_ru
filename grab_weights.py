@@ -39,16 +39,15 @@ def grab_embeddings(model, tokenizer, sentences, MAX_LEN, device='cuda:0'):
     attention_mask = inputs["attention_mask"].to(device)
     outputs = model(input_ids, attention_mask, token_type_ids)
 
-    result_embeddings = np.concatenate(outputs[1][12].cpu().detach().numpy(), axis=0)
-    res_emb_euclid = pairwise_distances(result_embeddings, metric="euclidean")
-    res_emb_spher = np.arccos(1-pairwise_distances(result_embeddings, metric="cosine"))
+    result_embeddings = outputs[1][12].cpu().detach().numpy()
+    res_emb_euclid = np.asarray([pairwise_distances(item, metric="euclidean") for item in result_embeddings], dtype=np.float16)
+    res_emb_spher = np.asarray([np.arccos(1-pairwise_distances(item, metric="cosine")) for item in result_embeddings], dtype=np.float16)
 
+    start_embeddings = outputs[1][0].cpu().detach().numpy()
+    start_emb_euclid = np.asarray([pairwise_distances(item, metric="euclidean") for item in start_embeddings], dtype=np.float16)
+    start_emb_spher = np.asarray([np.arccos(1-pairwise_distances(item, metric="cosine")) for item in start_embeddings], dtype=np.float16)
 
-    start_embeddings = np.concatenate(outputs[1][0].cpu().detach().numpy(), axis=0)
-    start_emb_euclid = pairwise_distances(start_embeddings, metric="euclidean")
-    start_emb_spher = np.arccos(1-pairwise_distances(start_embeddings, metric="cosine"))
-
-    return start_emb_euclid, start_emb_spher, res_emb_euclid, res_emb_spher
+    return np.expand_dims(start_emb_euclid, axis=1), np.expand_dims(start_emb_spher, axis=1), np.expand_dims(res_emb_euclid, axis=1), np.expand_dims(res_emb_spher, axis=1)
 
 
 def text_preprocessing(text):

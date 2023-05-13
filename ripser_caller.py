@@ -67,16 +67,16 @@ sph_start_emb_file = output_dir + 'start_embeddings/spherical_distance/' + subse
 
 barcodes_file = output_dir + 'barcodes/' + subset  + "_all_heads_" + str(len(layers_of_interest)) + "_layers_MAX_LEN_" + \
              str(max_tokens_amount) + "_" + model_path.split("/")[-1]
-barcodes_euc_final_file = output_dir + 'barcodes/euc_final' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+barcodes_euc_final_file = output_dir + 'barcodes/euc_final/' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1]
-barcodes_euc_start_file = output_dir + 'barcodes/euc_start' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+barcodes_euc_start_file = output_dir + 'barcodes/euc_start/' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1]
-barcodes_sph_final_file = output_dir + 'barcodes/sph_final' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+barcodes_sph_final_file = output_dir + 'barcodes/sph_final/' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1]
-barcodes_sph_start_file = output_dir + 'barcodes/sph_start' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+barcodes_sph_start_file = output_dir + 'barcodes/sph_start/' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1]
 
@@ -154,34 +154,38 @@ try:
     features_array = pickle.load(open('features.obj', 'rb'))
     features = np.concatenate(features_array, axis=2)
 except:
-    pickle.dump(np.array([]), open('features.obj', 'wb'))
+    pickle.dump([], open('features.obj', 'wb'))
+    features_array = []
     features = np.array([])
-print(features.shape)
 
 try:
     features_enc_final_array = pickle.load(open('features_enc_final.obj', 'rb'))
     features_enc_final = np.concatenate(features_enc_final_array, axis=2)
 except:
-    pickle.dump(np.array([]), open('features_enc_final.obj', 'wb'))
+    pickle.dump([], open('features_enc_final.obj', 'wb'))
+    features_enc_final_array = []
     features_enc_final = np.array([])
 try:
     features_enc_start_array = pickle.load(open('features_enc_start.obj', 'rb'))
     features_enc_start = np.concatenate(features_enc_start_array, axis=2)
 except:
-    pickle.dump(np.array([]), open('features_enc_start.obj', 'wb'))
+    pickle.dump([], open('features_enc_start.obj', 'wb'))
+    features_enc_start_array = []
     features_enc_start = np.array([])
 
 try:
     features_sph_final_array = pickle.load(open('features_sph_final.obj', 'rb'))
     features_sph_final = np.concatenate(features_sph_final_array, axis=2)
 except:
-    pickle.dump(np.array([]), open('features_sph_final.obj', 'wb'))
+    pickle.dump([], open('features_sph_final.obj', 'wb'))
+    features_sph_final_array = []
     features_sph_final = np.array([])
 try:
     features_sph_start_array = pickle.load(open('features_sph_start.obj', 'rb'))
     features_sph_start = np.concatenate(features_sph_start_array, axis=2)
 except:
     pickle.dump(np.array([]), open('features_sph_start.obj', 'wb'))
+    features_sph_start_array = []
     features_sph_start = np.array([])
 
 component = ceil(len(features_array)/2)
@@ -242,7 +246,6 @@ for i, filenames in enumerate(zip(adj_filenames, euc_final_filenames, euc_start_
     euc_final_matricies = np.load(euc_final, allow_pickle=True)
     sph_final_matricies = np.load(sph_final, allow_pickle=True)
     sph_start_matricies = np.load(sph_start, allow_pickle=True)
-    ntokens = ntokens_array[(i+component*single_set)*batch_size*DUMP_SIZE : (i+component*single_set+1)*batch_size*DUMP_SIZE]
 
     for filename, file, matrices in [ (adj, barcodes_file, adj_matricies)
                                     , (euc_final, barcodes_euc_final_file, euc_final_matricies)
@@ -250,6 +253,7 @@ for i, filenames in enumerate(zip(adj_filenames, euc_final_filenames, euc_start_
                                     , (sph_final, barcodes_sph_final_file, sph_final_matricies)
                                     , (sph_start, barcodes_sph_start_file, sph_start_matricies)
                                     ]:
+        ntokens = ntokens_array[(i+component*single_set)*batch_size*DUMP_SIZE : (i+component*single_set+1)*batch_size*DUMP_SIZE]
         splitted = split_matricies_and_lengths(matrices, ntokens, num_of_workers) # 2 or 20.
         barcodes = defaultdict(list)
         print(f"Matricies loaded from: {filename}")
@@ -284,10 +288,14 @@ bar_filenames = [
 bar_filenames = sorted(bar_filenames, key = lambda x: int(x.split('_')[-1].split('of')[0][4:].strip()))
 print(bar_filenames)
 
+print(os.listdir(output_dir + 'barcodes/euc_final/'))
+print(r_file.split('/')[-1])
+print(filename.split('_part')[0])
 bar_filenames_euc_final = [
     output_dir + 'barcodes/euc_final/' + filename
     for filename in os.listdir(output_dir + 'barcodes/euc_final/') if r_file.split('/')[-1] == filename.split('_part')[0]
 ]
+print(bar_filenames_euc_final)
 bar_filenames_euc_final = sorted(bar_filenames_euc_final, key = lambda x: int(x.split('_')[-1].split('of')[0][4:].strip()))
 
 bar_filenames_euc_start = [
@@ -335,6 +343,7 @@ for filename, file_euc_final, file_euc_start, file_sph_final, file_sph_start in 
                 features = ripser_count.count_ripser_features(ref_barcodes, ripser_feature_names)
                 features_layer.append(features)
             features_part.append(features_layer)
+        print(len(features_layer))
         array.append(np.asarray(features_part))
 
 for filename in os.listdir(output_dir + 'attentions/'):
