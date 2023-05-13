@@ -31,8 +31,8 @@ np.random.seed(42) # For reproducibility.
 
 max_tokens_amount  = 128 # The number of tokens to which the tokenized text is truncated / padded.
 stats_cap          = 500 # Max value that the feature can take. Is NOT applicable to Betty numbers.
-    
-layers_of_interest = [i for i in range(12)]  # Layers for which attention matrices and features on them are 
+
+layers_of_interest = [i for i in range(12)]  # Layers for which attention matrices and features on them are
                                              # calculated. For calculating features on all layers, leave it be
                                              # [i for i in range(12)].
 stats_name = "s_e_v_c_b0b1" # The set of topological features that will be count (see explanation below)
@@ -43,7 +43,7 @@ thrs = len(thresholds_array)                           # ("t" in the paper)
 model_path = tokenizer_path = "bert-base-cased"
 
 # You can use either standard or fine-tuned BERT. If you want to use fine-tuned BERT to your current task, save the
-# model and the tokenizer with the commands tokenizer.save_pretrained(output_dir); 
+# model and the tokenizer with the commands tokenizer.save_pretrained(output_dir);
 # bert_classifier.save_pretrained(output_dir) into the same directory and insert the path to it here.
 
 subset = "train_ru"           # .csv file with the texts, for which we count topological features
@@ -67,7 +67,19 @@ barcodes_file = output_dir + 'barcodes/' + subset  + "_all_heads_" + str(len(lay
 ripser_file = output_dir + 'features/' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
-                 
+ripser_euc_final_file = output_dir + 'features/euc_final' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+                 + "_MAX_LEN_" + str(max_tokens_amount) + \
+                 "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
+ripser_euc_start_file = output_dir + 'features/euc_start' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+                 + "_MAX_LEN_" + str(max_tokens_amount) + \
+                 "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
+ripser_sph_final_file = output_dir + 'features/sph_final' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+                 + "_MAX_LEN_" + str(max_tokens_amount) + \
+                 "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
+ripser_sph_start_file = output_dir + 'features/sph_start' + subset + "_all_heads_" + str(len(layers_of_interest)) + "_layers" \
+                 + "_MAX_LEN_" + str(max_tokens_amount) + \
+                 "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
+
 euc_final_emb_file = output_dir + 'final_embeddings/euclidean_distance/' + subset
 sph_final_emb_file = output_dir + 'final_embeddings/spherical_distance/' + subset
 
@@ -94,8 +106,8 @@ print("Min. amount of words in example:", np.min(sentences))
 
 MAX_LEN = max_tokens_amount
 
-# tokenizer = pickle.load(open('/home/amshtareva/tokenizer_obj','rb'))
 tokenizer = BertTokenizer.from_pretrained(tokenizer_path, do_lower_case=True)
+pickle.dump(tokeniizer, open('tokenizer_obj','wb'))
 
 def get_token_length(batch_texts):
     inputs = tokenizer.batch_encode_plus(batch_texts,
@@ -149,31 +161,34 @@ mod = 2000
 number_of_batches_single = ceil(mod / batch_size)
 single_set = ceil(number_of_batches_single / DUMP_SIZE)
 
-features_array = pickle.load(open('/home/amshtareva/features.obj', 'rb'))
+try:
+    features_array = pickle.load(open('/home/amshtareva/features.obj', 'rb'))
+except:
+    features_array = []
 component = ceil(len(features_array)/2)
 iterv = number_of_batches-component*number_of_batches_single
 
 device='cuda'
 model = BertForSequenceClassification.from_pretrained(model_path, output_hidden_states=True, output_attentions=True)
-# model = pickle.load(open('/home/amshtareva/model_obj','rb'))
-# model = nn.DataParallel(model)
+pickle.dump(tokeniizer, open('model_obj','wb'))
+model = nn.DataParallel(model)
 model = model.to(device)
 
 print("Entering loop.")
 
 while iterv > 0:
 #for component in range(4):
-    for i in tqdm(range(min(number_of_batches_single, iterv)), desc="Weights calc"): 
+    for i in tqdm(range(min(number_of_batches_single, iterv)), desc="Weights calc"):
         attention_w = grab_attention_weights(model, tokenizer, batched_sentences[i+component*number_of_batches_single], max_tokens_amount, device)
         adj_matricies.append(attention_w)
-        
+
         start_emb_euclid, start_emb_spher, res_emb_euclid, res_emb_spher = grab_attention_weights(model, tokenizer, batched_sentences[i+component*number_of_batches_single], max_tokens_amount, device)
         final_euc_matricies.append(res_emb_euclid)
         final_sph_matricies.append(res_emb_spher)
         start_euc_matricies.append(start_emb_euclid)
         start_sph_matricies.append(start_emb_spher)
-        
-        
+
+
         if (i+1) % DUMP_SIZE == 0: # dumping
             print(f'Saving: shape {adj_matricies[0].shape}')
             adj_matricies = np.concatenate(adj_matricies, axis=1)
@@ -233,9 +248,9 @@ while iterv > 0:
         start_sph_filenames.append(filename3)
         np.save(filename4, start_sph_matricies)
         start_sph_matricies = []
-        
+
     print("Results saved.")
-    
+
     # Run computations in completely isolated runtime assuming it helps with memory problem.
     p = subprocess.Popen(["python3", "-u", "ripser_caller.py"], stdout = sys.stdout, stderr = sys.stderr)
     p.wait()
@@ -248,4 +263,30 @@ features_array = pickle.load(open('/home/amshtareva/features.obj', 'rb'))
 features = np.concatenate(features_array, axis=2)
 features.shape
 
+try:
+    features_enc_final_array = pickle.load(open('/home/amshtareva/features_enc_final.obj', 'rb'))
+    features_enc_final = np.concatenate(features_enc_final_array, axis=2)
+except:
+    features_enc_final = []
+try:
+    features_enc_start_array = pickle.load(open('/home/amshtareva/features_enc_start.obj', 'rb'))
+    features_enc_start = np.concatenate(features_enc_start_array, axis=2)
+except:
+    features_enc_start = []
+
+try:
+    features_sph_final_array = pickle.load(open('/home/amshtareva/features_sph_final.obj', 'rb'))
+    features_sph_final = np.concatenate(features_sph_final_array, axis=2)
+except:
+    features_sph_final = []
+try:
+    features_sph_start_array = pickle.load(open('/home/amshtareva/features_sph_start.obj', 'rb'))
+    features_sph_start = np.concatenate(features_sph_start_array, axis=2)
+except:
+    features_sph_start = []
+
 np.save(ripser_file, features)
+np.save(ripser_euc_final_file, features_enc_final)
+np.save(ripser_euc_start_file, features_enc_start)
+np.save(ripser_sph_final_file, features_sph_final)
+np.save(ripser_sph_start_file, features_sph_start)
