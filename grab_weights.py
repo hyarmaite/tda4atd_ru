@@ -23,9 +23,9 @@ def grab_attention_weights(model, tokenizer, sentences, MAX_LEN, device='cuda:0'
     attention = model(input_ids, attention_mask, token_type_ids)['attentions']
     # layer X sample X head X n_token X n_token
     attention = np.asarray([layer.cpu().detach().numpy() for layer in attention], dtype=np.float16)
-    
+
     return attention
-    
+
 def grab_embeddings(model, tokenizer, sentences, MAX_LEN, device='cuda:0'):
     inputs = tokenizer.batch_encode_plus([text_preprocessing(s) for s in sentences],
                                        return_tensors='pt',
@@ -38,19 +38,19 @@ def grab_embeddings(model, tokenizer, sentences, MAX_LEN, device='cuda:0'):
     token_type_ids = inputs["token_type_ids"].to(device)
     attention_mask = inputs["attention_mask"].to(device)
     outputs = model(input_ids, attention_mask, token_type_ids)
-    
-    result_embeddings = np.concatenate(outputs[1][12].detach().numpy(), axis=0)
+
+    result_embeddings = np.concatenate(outputs[1][12].cpu().detach().numpy(), axis=0)
     res_emb_euclid = pairwise_distances(result_embeddings, metric="euclidean")
     res_emb_spher = np.arccos(1-pairwise_distances(result_embeddings, metric="cosine"))
-    
-    
-    start_embeddings = np.concatenate(outputs[1][0].detach().numpy(), axis=0)
+
+
+    start_embeddings = np.concatenate(outputs[1][0].cpu().detach().numpy(), axis=0)
     start_emb_euclid = pairwise_distances(start_embeddings, metric="euclidean")
     start_emb_spher = np.arccos(1-pairwise_distances(start_embeddings, metric="cosine"))
-    
+
     return start_emb_euclid, start_emb_spher, res_emb_euclid, res_emb_spher
 
-  
+
 def text_preprocessing(text):
     """
     - Remove entity mentions (eg. '@united')

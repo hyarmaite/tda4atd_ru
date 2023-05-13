@@ -14,6 +14,7 @@ from stats_count import *
 from grab_weights import grab_attention_weights, text_preprocessing
 
 import os
+import sys
 import shutil
 import ripser_count
 from localfuncs import *
@@ -50,7 +51,7 @@ model_path = tokenizer_path = "bert-base-uncased"
 # model and the tokenizer with the commands tokenizer.save_pretrained(output_dir);
 # bert_classifier.save_pretrained(output_dir) into the same directory and insert the path to it here.
 
-subset = "train_ru"           # .csv file with the texts, for which we count topological features
+subset = "valid_5k"           # .csv file with the texts, for which we count topological features
 input_dir = "small_gpt_web/"  # Name of the directory with .csv file
 output_dir = "small_gpt_web/" # Name of the directory with calculations results
 
@@ -83,7 +84,7 @@ ripser_file = output_dir + 'features/' + subset + "_all_heads_" + str(len(layers
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
 
-ntokens_array = pickle.load(open('/home/amshtareva/ntokens_train.obj', 'rb'))
+ntokens_array = pickle.load(open('ntokens_train.obj', 'rb'))
 
 print("Tokens read")
 
@@ -149,11 +150,39 @@ ripser_feature_names=[
 ripser_all_feature_names = ripser_feature_names + hfeat
 feature_list = ['self', 'beginning', 'prev', 'next', 'comma', 'dot']
 
-features_array = pickle.load(open('/home/amshtareva/features.obj', 'rb'))
-features_enc_final_array = pickle.load(open('/home/amshtareva/features_enc_final.obj', 'rb'))
-features_enc_start_array = pickle.load(open('/home/amshtareva/features_enc_start.obj', 'rb'))
-features_sph_final_array = pickle.load(open('/home/amshtareva/features_sph_final.obj', 'rb'))
-features_sph_start_array = pickle.load(open('/home/amshtareva/features_sph_start.obj', 'rb'))
+try:
+    features_array = pickle.load(open('features.obj', 'rb'))
+    features = np.concatenate(features_array, axis=2)
+except:
+    pickle.dump(np.array([]), open('features.obj', 'wb'))
+    features = np.array([])
+print(features.shape)
+
+try:
+    features_enc_final_array = pickle.load(open('features_enc_final.obj', 'rb'))
+    features_enc_final = np.concatenate(features_enc_final_array, axis=2)
+except:
+    pickle.dump(np.array([]), open('features_enc_final.obj', 'wb'))
+    features_enc_final = np.array([])
+try:
+    features_enc_start_array = pickle.load(open('features_enc_start.obj', 'rb'))
+    features_enc_start = np.concatenate(features_enc_start_array, axis=2)
+except:
+    pickle.dump(np.array([]), open('features_enc_start.obj', 'wb'))
+    features_enc_start = np.array([])
+
+try:
+    features_sph_final_array = pickle.load(open('features_sph_final.obj', 'rb'))
+    features_sph_final = np.concatenate(features_sph_final_array, axis=2)
+except:
+    pickle.dump(np.array([]), open('features_sph_final.obj', 'wb'))
+    features_sph_final = np.array([])
+try:
+    features_sph_start_array = pickle.load(open('features_sph_start.obj', 'rb'))
+    features_sph_start = np.concatenate(features_sph_start_array, axis=2)
+except:
+    pickle.dump(np.array([]), open('features_sph_start.obj', 'wb'))
+    features_sph_start = np.array([])
 
 component = ceil(len(features_array)/2)
 iterv = number_of_batches-component*number_of_batches_single
@@ -162,10 +191,13 @@ queue = Queue()
 num_of_workers = 60
 pool = Pool(num_of_workers)
 
+print(os.listdir(output_dir + 'attentions/'))
+print(r_file)
 adj_filenames = [
     output_dir + 'attentions/' + filename
     for filename in os.listdir(output_dir + 'attentions/') if r_file in (output_dir + 'attentions/' + filename)
 ]
+print(adj_filenames)
 
 # sorted by part number
 adj_filenames = sorted(adj_filenames, key = lambda x: int(x.split('_')[-1].split('of')[0][4:].strip()))
@@ -231,6 +263,8 @@ for i, filenames in enumerate(zip(adj_filenames, euc_final_filenames, euc_start_
                 )
             )
             GPUtil.showUtilization()
+            print(matrices.shape)
+            sys.stdout.flush()
             p.start()
             barcodes_part = queue.get() # block until putted and get barcodes from the queue
             #print("Features got.")
@@ -314,8 +348,14 @@ for filename in os.listdir(output_dir + 'barcodes/'):
     filepath = os.path.join(output_dir + 'barcodes/', filename)
     try:
         shutil.rmtree(filepath)
+
     except OSError:
         os.remove(filepath)
+
+os.system('mkdir small_gpt_web/barcodes/euc_final')
+os.system('mkdir small_gpt_web/barcodes/euc_start')
+os.system('mkdir small_gpt_web/barcodes/sph_final')
+os.system('mkdir small_gpt_web/barcodes/sph_start')
 
 print(f"DUMPING: {str(len(features_array))}")
 pickle.dump(features_array, open('features.obj', 'wb'))
