@@ -14,8 +14,8 @@ import torch.nn as nn
 
 # Dimension: 0, 1, etc.; homology dimension
 
-# Types: 
-    
+# Types:
+
 #     1. s: sum of lengths; example: "h1_s".
 #     2. m: mean of lengths; example: "h1_m"
 #     3. v: variance of lengths; example "h1_v"
@@ -49,7 +49,7 @@ def barcode_number(barcode, dim=0, bd='death', ml='m', t=0.5):
             raise Exception("Wrong more/less type in barcode_number calculation")
     else:
         return 0.0
-        
+
 def barcode_time(barcode, dim=0, bd='birth'):
     """Calculate time of birth/death in h{dim} of longest barcode"""
     if len(barcode[dim]):
@@ -57,7 +57,7 @@ def barcode_time(barcode, dim=0, bd='birth'):
         return barcode[dim][bd][max_len_idx]
     else:
         return 0.0
-    
+
 def barcode_number_of_barcodes(barcode, dim=0):
     return len(barcode[dim])
 
@@ -65,7 +65,7 @@ def barcode_entropy(barcode, dim=0):
     lengths = barcode[dim]['death'] - barcode[dim]['birth']
     lengths /= np.sum(lengths)
     return -np.sum(lengths*np.log(lengths))
-    
+
 def barcode_sum(barcode, dim=0):
     """Calculate sum of lengths of barcodes in h{dim}"""
     if len(barcode[dim]):
@@ -121,7 +121,7 @@ def count_ripser_features(barcodes, feature_list=['h0_m']):
             feat = [barcode_number_of_barcodes(barcode, dim) for barcode in barcodes]
         elif ftype == 'e':
             feat = [barcode_entropy(barcode, dim) for barcode in barcodes]
-        features.append(feat) 
+        features.append(feat)
     return np.swapaxes(np.array(features), 0, 1) # samples X n_features
 
 def matrix_to_ripser(matrix, ntokens, lower_bound=0.0):

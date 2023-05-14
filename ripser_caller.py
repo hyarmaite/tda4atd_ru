@@ -52,8 +52,8 @@ model_path = tokenizer_path = "bert-base-uncased"
 # bert_classifier.save_pretrained(output_dir) into the same directory and insert the path to it here.
 
 subset = sys.argv[1]           # .csv file with the texts, for which we count topological features
-input_dir = "small_gpt_web/"  # Name of the directory with .csv file
-output_dir = "small_gpt_web/" # Name of the directory with calculations results
+input_dir = "/home/amshtareva/small_gpt_web/"  # Name of the directory with .csv file
+output_dir = "/home/amshtareva/small_gpt_web/" # Name of the directory with calculations results
 
 prefix = output_dir + subset
 
@@ -84,7 +84,7 @@ ripser_file = output_dir + 'features/' + subset + "_all_heads_" + str(len(layers
                  + "_MAX_LEN_" + str(max_tokens_amount) + \
                  "_" + model_path.split("/")[-1] + "_ripser" + '.npy'
 
-ntokens_array = pickle.load(open('ntokens_train.obj', 'rb'))
+ntokens_array = pickle.load(open('/home/amshtareva/ntokens_train.obj', 'rb'))
 
 print("Tokens read")
 
@@ -107,7 +107,7 @@ single_set = ceil(number_of_batches_single / DUMP_SIZE)
 
 #assert torch.cuda.is_available() == True
 
-dim = 1
+dim = 10
 lower_bound = 1e-3
 
 mod = 2000
@@ -115,7 +115,7 @@ number_of_batches_single = ceil(mod / batch_size)
 single_set = ceil(number_of_batches_single / DUMP_SIZE)
 
 hfeat = []
-for i in range (2,20):
+for i in range (2,dim+1):
      hfeat.append("h" + str(i) + "_t_b")
      hfeat.append("h" + str(i) + "_n_b_m_t0.1")
      hfeat.append("h" + str(i) + "_n_b_l_t0.2")
@@ -151,40 +151,40 @@ ripser_all_feature_names = ripser_feature_names + hfeat
 feature_list = ['self', 'beginning', 'prev', 'next', 'comma', 'dot']
 
 try:
-    features_array = pickle.load(open('features.obj', 'rb'))
+    features_array = pickle.load(open('/home/amshtareva/features.obj', 'rb'))
     features = np.concatenate(features_array, axis=2)
 except:
-    pickle.dump([], open('features.obj', 'wb'))
+    pickle.dump([], open('/home/amshtareva/features.obj', 'wb'))
     features_array = []
     features = np.array([])
 
 try:
-    features_enc_final_array = pickle.load(open('features_enc_final.obj', 'rb'))
+    features_enc_final_array = pickle.load(open('/home/amshtareva/features_enc_final.obj', 'rb'))
     features_enc_final = np.concatenate(features_enc_final_array, axis=2)
 except:
-    pickle.dump([], open('features_enc_final.obj', 'wb'))
+    pickle.dump([], open('/home/amshtareva/features_enc_final.obj', 'wb'))
     features_enc_final_array = []
     features_enc_final = np.array([])
 try:
-    features_enc_start_array = pickle.load(open('features_enc_start.obj', 'rb'))
+    features_enc_start_array = pickle.load(open('/home/amshtareva/features_enc_start.obj', 'rb'))
     features_enc_start = np.concatenate(features_enc_start_array, axis=2)
 except:
-    pickle.dump([], open('features_enc_start.obj', 'wb'))
+    pickle.dump([], open('/home/amshtareva/features_enc_start.obj', 'wb'))
     features_enc_start_array = []
     features_enc_start = np.array([])
 
 try:
-    features_sph_final_array = pickle.load(open('features_sph_final.obj', 'rb'))
+    features_sph_final_array = pickle.load(open('/home/amshtareva/features_sph_final.obj', 'rb'))
     features_sph_final = np.concatenate(features_sph_final_array, axis=2)
 except:
-    pickle.dump([], open('features_sph_final.obj', 'wb'))
+    pickle.dump([], open('/home/amshtareva/features_sph_final.obj', 'wb'))
     features_sph_final_array = []
     features_sph_final = np.array([])
 try:
-    features_sph_start_array = pickle.load(open('features_sph_start.obj', 'rb'))
+    features_sph_start_array = pickle.load(open('/home/amshtareva/features_sph_start.obj', 'rb'))
     features_sph_start = np.concatenate(features_sph_start_array, axis=2)
 except:
-    pickle.dump(np.array([]), open('features_sph_start.obj', 'wb'))
+    pickle.dump(np.array([]), open('/home/amshtareva/features_sph_start.obj', 'wb'))
     features_sph_start_array = []
     features_sph_start = np.array([])
 
@@ -329,18 +329,18 @@ for filename, file_euc_final, file_euc_start, file_sph_final, file_sph_start in 
     barcodes_sph_start = json.load(open(file_sph_start))
     print(f"Barcodes loaded", flush=True)
 
-    for barcodes, array in [ (barcodes_att, features_array)
-                           , (barcodes_euc_final, features_enc_final_array)
-                           , (barcodes_euc_start, features_enc_start_array)
-                           , (barcodes_sph_final, features_sph_final_array)
-                           , (barcodes_sph_start, features_sph_start_array)
-                           ]:
+    for featset, barcodes, array in [ (ripser_feature_names, barcodes_att, features_array)
+                                    , (ripser_all_feature_names, barcodes_euc_final, features_enc_final_array)
+                                    , (ripser_all_feature_names, barcodes_euc_start, features_enc_start_array)
+                                    , (ripser_all_feature_names, barcodes_sph_final, features_sph_final_array)
+                                    , (ripser_all_feature_names, barcodes_sph_start, features_sph_start_array)
+                                    ]:
         features_part = []
         for layer in barcodes:
             features_layer = []
             for head in barcodes[layer]:
                 ref_barcodes = reformat_barcodes(barcodes[layer][head])
-                features = ripser_count.count_ripser_features(ref_barcodes, ripser_feature_names)
+                features = ripser_count.count_ripser_features(ref_barcodes, featset)
                 features_layer.append(features)
             features_part.append(features_layer)
         print(len(features_layer))
@@ -361,14 +361,14 @@ for filename in os.listdir(output_dir + 'barcodes/'):
     except OSError:
         os.remove(filepath)
 
-os.system('mkdir small_gpt_web/barcodes/euc_final')
-os.system('mkdir small_gpt_web/barcodes/euc_start')
-os.system('mkdir small_gpt_web/barcodes/sph_final')
-os.system('mkdir small_gpt_web/barcodes/sph_start')
+os.system('mkdir /home/amshtareva/small_gpt_web/barcodes/euc_final')
+os.system('mkdir /home/amshtareva/small_gpt_web/barcodes/euc_start')
+os.system('mkdir /home/amshtareva/small_gpt_web/barcodes/sph_final')
+os.system('mkdir /home/amshtareva/small_gpt_web/barcodes/sph_start')
 
 print(f"DUMPING: {str(len(features_array))}")
-pickle.dump(features_array, open('features.obj', 'wb'))
-pickle.dump(features_enc_final_array, open('features_enc_final.obj', 'wb'))
-pickle.dump(features_enc_start_array, open('features_enc_start.obj', 'wb'))
-pickle.dump(features_sph_final_array, open('features_sph_final.obj', 'wb'))
-pickle.dump(features_sph_start_array, open('features_sph_start.obj', 'wb'))
+pickle.dump(features_array, open('/home/amshtareva/features.obj', 'wb'))
+pickle.dump(features_enc_final_array, open('/home/amshtareva/features_enc_final.obj', 'wb'))
+pickle.dump(features_enc_start_array, open('/home/amshtareva/features_enc_start.obj', 'wb'))
+pickle.dump(features_sph_final_array, open('/home/amshtareva/features_sph_final.obj', 'wb'))
+pickle.dump(features_sph_start_array, open('/home/amshtareva/features_sph_start.obj', 'wb'))

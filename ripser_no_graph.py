@@ -47,8 +47,8 @@ model_path = tokenizer_path = "bert-base-uncased"
 # bert_classifier.save_pretrained(output_dir) into the same directory and insert the path to it here.
 
 subset = sys.argv[1]           # .csv file with the texts, for which we count topological features
-input_dir = "small_gpt_web/"  # Name of the directory with .csv file
-output_dir = "small_gpt_web/" # Name of the directory with calculations results
+input_dir = "/home/amshtareva/small_gpt_web/"  # Name of the directory with .csv file
+output_dir = "/home/amshtareva/small_gpt_web/" # Name of the directory with calculations results
 
 prefix = output_dir + subset
 
@@ -107,7 +107,7 @@ print("Min. amount of words in example:", np.min(sentences))
 MAX_LEN = max_tokens_amount
 
 tokenizer = BertTokenizer.from_pretrained(tokenizer_path, do_lower_case=True)
-pickle.dump(tokenizer, open('tokenizer_obj','wb'))
+pickle.dump(tokenizer, open('/home/amshtareva/tokenizer_obj','wb'))
 
 def get_token_length(batch_texts):
     inputs = tokenizer.batch_encode_plus(batch_texts,
@@ -131,7 +131,7 @@ def get_token_length(batch_texts):
 data['tokenizer_length'] = get_token_length(data['sentence'].values)
 
 ntokens_array = data['tokenizer_length'].values
-pickle.dump(ntokens_array, open('ntokens_train.obj', 'wb'))
+pickle.dump(ntokens_array, open('/home/amshtareva/ntokens_train.obj', 'wb'))
 
 print("Tokens read")
 
@@ -162,7 +162,7 @@ number_of_batches_single = ceil(mod / batch_size)
 single_set = ceil(number_of_batches_single / DUMP_SIZE)
 
 try:
-    features_array = pickle.load(open('features.obj', 'rb'))
+    features_array = pickle.load(open('/home/amshtareva/features.obj', 'rb'))
 except:
     features_array = []
 component = ceil(len(features_array)/2)
@@ -170,7 +170,7 @@ iterv = number_of_batches-component*number_of_batches_single
 
 device='cuda'
 model = BertForSequenceClassification.from_pretrained(model_path, output_hidden_states=True, output_attentions=True)
-pickle.dump(model, open('model_obj','wb'))
+pickle.dump(model, open('/home/amshtareva/model_obj','wb'))
 model = nn.DataParallel(model)
 model = model.to(device)
 
@@ -258,7 +258,6 @@ while iterv > 0:
         start_sph_matricies = []
 
     print("Results saved.")
-    os.system('ls small_gpt_web/attentions')
 
     # Run computations in completely isolated runtime assuming it helps with memory problem.
     p = subprocess.Popen(["python3", "-u", "ripser_caller.py", subset], stdout = sys.stdout, stderr = sys.stderr)
@@ -268,20 +267,20 @@ while iterv > 0:
     iterv = iterv - number_of_batches_single
     component = component + 1
 
-features_array = pickle.load(open('features.obj', 'rb'))
+features_array = pickle.load(open('/home/amshtareva/features.obj', 'rb'))
 features = np.concatenate(features_array, axis=2)
 features.shape
 
-features_enc_final_array = pickle.load(open('features_enc_final.obj', 'rb'))
+features_enc_final_array = pickle.load(open('/home/amshtareva/features_enc_final.obj', 'rb'))
 features_enc_final = np.concatenate(features_enc_final_array, axis=2)
 
-features_enc_start_array = pickle.load(open('features_enc_start.obj', 'rb'))
+features_enc_start_array = pickle.load(open('/home/amshtareva/features_enc_start.obj', 'rb'))
 features_enc_start = np.concatenate(features_enc_start_array, axis=2)
 
-features_sph_final_array = pickle.load(open('features_sph_final.obj', 'rb'))
+features_sph_final_array = pickle.load(open('/home/amshtareva/features_sph_final.obj', 'rb'))
 features_sph_final = np.concatenate(features_sph_final_array, axis=2)
 
-features_sph_start_array = pickle.load(open('features_sph_start.obj', 'rb'))
+features_sph_start_array = pickle.load(open('/home/amshtareva/features_sph_start.obj', 'rb'))
 features_sph_start = np.concatenate(features_sph_start_array, axis=2)
 
 np.save(ripser_file, features)
