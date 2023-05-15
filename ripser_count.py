@@ -127,7 +127,7 @@ def count_ripser_features(barcodes, feature_list=['h0_m']):
 def matrix_to_ripser(matrix, ntokens, lower_bound=0.0):
     """Convert matrix to appropriate ripser++ format"""
     matrix = cutoff_matrix(matrix, ntokens)
-    matrix = (matrix > lower_bound).astype(np.int) * matrix
+    matrix = (matrix > lower_bound).astype(int) * matrix
     matrix = 1.0 - matrix
     matrix -= np.diag(np.diag(matrix)) # 0 on diagonal
     matrix = np.minimum(matrix.T, matrix) # symmetrical, edge emerges if at least one direction is working

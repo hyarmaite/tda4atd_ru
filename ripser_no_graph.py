@@ -178,7 +178,7 @@ print("Entering loop.")
 
 while iterv > 0:
 #for component in range(4):
-    for i in tqdm(range(min(number_of_batches_single, iterv)), desc="Weights calc"):
+    for i in range(min(number_of_batches_single, iterv)):
         attention_w = grab_attention_weights(model, tokenizer, batched_sentences[i+component*number_of_batches_single], max_tokens_amount, device)
         adj_matricies.append(attention_w)
 
